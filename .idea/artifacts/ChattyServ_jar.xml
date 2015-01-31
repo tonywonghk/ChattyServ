@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="ChattyServ:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ChattyServ_jar</output-path>
+    <root id="archive" name="ChattyServ.jar">
+      <element id="module-output" name="ChattyServ" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/io/netty/netty-all/4.0.25.Final/netty-all-4.0.25.Final.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.3.1/gson-2.3.1.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

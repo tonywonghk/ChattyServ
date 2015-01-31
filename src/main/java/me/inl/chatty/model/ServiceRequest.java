@@ -1,13 +1,15 @@
 package me.inl.chatty.model;
 
 /**
- * Created by cah7k2w on 31/1/15.
+ * Created by Tony Wong on 31/1/15.
  */
 public class ServiceRequest {
 
     private String type;
     private String action;
     private String payload;
+    private String token;
+    private String datetime;
 
     public ServiceRequest(){
 
@@ -37,8 +39,26 @@ public class ServiceRequest {
         this.payload = payload;
     }
 
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getDatetime() {
+        return datetime;
+    }
+
+    public void setDatetime(String datetime) {
+        this.datetime = datetime;
+    }
+
     @Override
     public String toString(){
         return "ServiceRequest [type =" + type + ", action=" + action + ", payload={" + payload + "}]" ;
     }
+
+
 }
