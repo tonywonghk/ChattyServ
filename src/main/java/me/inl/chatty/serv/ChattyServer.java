@@ -1,10 +1,7 @@
 package me.inl.chatty.serv;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -14,8 +11,11 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import redis.clients.jedis.Jedis;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -24,13 +24,16 @@ import java.net.InetSocketAddress;
 public class ChattyServer {
     static final boolean SSL = System.getProperty("ssl") != null;
     private final SslContext sslCtx;
+    private final Jedis jedis;
 
     private final ChannelGroup channelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     private final EventLoopGroup group = new NioEventLoopGroup();
     private Channel channel;
+    private Map<String, ChannelHandlerContext> connHash = new HashMap<String, ChannelHandlerContext>(2048);
 
-    public ChattyServer(SslContext sslCtx){
+    public ChattyServer(SslContext sslCtx, Jedis jedis){
         this.sslCtx = sslCtx;
+        this.jedis = jedis;
     }
 
     public ChannelFuture start(InetSocketAddress address){
@@ -38,7 +41,7 @@ public class ChattyServer {
         bootstrap.group(group)
                 .channel(NioServerSocketChannel.class)
                 .handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(createInitializer(channelGroup));
+                .childHandler(createInitializer(channelGroup, connHash));
 
         ChannelFuture future = bootstrap.bind(address);
         future.syncUninterruptibly();
@@ -50,8 +53,8 @@ public class ChattyServer {
         return future;
     }
 
-    protected ChannelInitializer<Channel> createInitializer(ChannelGroup group) {
-        return new WebSocketServerInitializer(group, sslCtx);
+    protected ChannelInitializer<Channel> createInitializer(ChannelGroup group, Map<String, ChannelHandlerContext> connHash) {
+        return new WebSocketServerInitializer(group,connHash,sslCtx,jedis);
     }
 
     public void destory(){
@@ -74,6 +77,8 @@ public class ChattyServer {
 
         int serverPort = 8333;
         final SslContext sslCtx;
+        final Jedis jedis;
+        final String redis_host = "192.168.1.80";
 
         if(args != null & args.length > 0){
             serverPort = Integer.parseInt(args[0]);
@@ -86,7 +91,9 @@ public class ChattyServer {
             sslCtx = null;
         }
 
-        final ChattyServer endpoint = new ChattyServer(sslCtx);
+        jedis = new Jedis(redis_host);
+
+        final ChattyServer endpoint = new ChattyServer(sslCtx, jedis);
         ChannelFuture future = endpoint.start(new InetSocketAddress(serverPort));
         Runtime.getRuntime().addShutdownHook(new Thread(){
 

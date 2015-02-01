@@ -1,6 +1,7 @@
 package me.inl.chatty.serv;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.group.ChannelGroup;
@@ -10,6 +11,9 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import redis.clients.jedis.Jedis;
+
+import java.util.Map;
 
 
 /**
@@ -19,11 +23,15 @@ public class WebSocketServerInitializer extends ChannelInitializer<Channel>{
 
     private final SslContext sslCtx;
     private final ChannelGroup group;
+    private final Jedis jedis;
+    private final Map<String, ChannelHandlerContext> connHash;
 
 
-    public WebSocketServerInitializer(ChannelGroup group, SslContext sslCtx){
+    public WebSocketServerInitializer(ChannelGroup group,Map<String, ChannelHandlerContext> connHash,SslContext sslCtx, Jedis jedis){
         this.sslCtx = sslCtx;
         this.group = group;
+        this.jedis = jedis;
+        this.connHash = connHash;
     }
 
     @Override
@@ -40,8 +48,7 @@ public class WebSocketServerInitializer extends ChannelInitializer<Channel>{
         pipeline.addLast(new ChunkedWriteHandler());
         pipeline.addLast(new HttpRequestHandler(contextPath));
         pipeline.addLast(new WebSocketServerProtocolHandler(contextPath));
-        pipeline.addLast(new TextWebSocketFrameHandler(group));
-
+        pipeline.addLast(new TextWebSocketFrameHandler(group, connHash, jedis));
 
     }
 }
